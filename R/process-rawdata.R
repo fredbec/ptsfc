@@ -45,6 +45,58 @@ format.energy.byhour <- function(currDate,
     .d(, .(dhr = sum(demand)), by = utchour)
     .d()
 
+
+  data.table::fwrite(processedData, here(pathTo, paste0("energy_processed", currDate, ".csv")))
+  return(processedData)
+
+
+}
+
+
+#' Converts to UTC
+#'
+#' @param currDate
+#' @param pathFrom
+#' @param pathTo
+#'
+#' @import data.table
+#' @import lubridate
+#'
+#' @return
+#' @export
+#'
+#' @examples
+format.dax<- function(currDate,
+                      pathFrom = here("data", "dax", "raw"),
+                      pathTo = here("data", "dax")){
+
+  rawData <- data.table::fread(here(pathFrom, paste0("dax", currDate, ".csv")))
+
+  #for piping data.table
+  .d <- `[`
+
+  columns <- paste0("logR", seq(1,5))
+  colapp <- paste0("logcLag", seq(1,5))
+
+  #first, convert everything to UTC
+  processedData <- rawData |>
+    setDT() |>
+    #impute nulls with average of surrounding values
+    #crude, but only applies to two values
+    .d(!is.na(close)) |>
+    .d(, close := as.numeric(close)) |>
+    .d(, leadC := shift(close, -1)) |>
+    .d(, lagC := shift(close, 1)) |>
+
+    #make log returns
+    .d(, logc := log(close)) |>
+    .d(, paste0("logcLag", seq(1,5)) := shift(logc,seq(1,5))) |>
+    .d(, (columns) := lapply(.SD, function(x) 100* (logc-x)), .SDcols = colapp) |>
+    .d(!is.na(logR5))
+
+
+  data.table::fwrite(processedData, here(pathTo, paste0("dax", currDate, ".csv")))
+
   return(processedData)
 
 
