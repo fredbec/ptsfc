@@ -1,0 +1,110 @@
+---
+title: "Energy_HolidayEffects"
+output: html_document
+date: "2022-11-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+```
+
+```{r}
+library(here)
+library(ggplot2)
+library(RColorBrewer)
+library(lubridate)
+library(data.table)
+library(dplyr)
+devtools::load_all()
+.d <- `[`
+```
+
+
+## Energy Data - Holiday Effects
+
+This document should briefly motivate the inclusion of public holiday effects for predicting Energy Data.
+
+```{r read data}
+energy <- format.energy.byhour("20221109") |>
+  .d(, month := month(utchour)) |>
+  .d(, hour := hour(utchour)) |>
+  .d(, weekday := wday(utchour))
+```
+
+For example, for October 3, the day of Germany Reunification:
+
+```{r oct3, message = FALSE, warning = FALSE}
+#get first five days of October for all years
+holen <- energy |>
+  filter(lubridate::month(utchour) == 10, lubridate::day(utchour) %in% seq(1:5))
+
+#make factor that codes normal day - weekend day - public holiday
+holen |>
+  .d(, wend := as.numeric(weekday %in% c(1,7))) |> #get weekend days
+  .d(lubridate::day(utchour) == 3, wend := 2) |> #get october 3
+  .d(, wend := factor(wend, levels = c(0,1,2), 
+                      labels = c("normal day", "weekend", "holiday"))) |>
+  .d(, date := date(utchour)) #for plotting
+```
+
+```{r plotdat}
+ggplot(holen, aes(x = hour, y = dhr, color = wend, group = date)) +
+  geom_line() +
+  scale_color_brewer(palette = "Set2") +
+  theme_minimal()+
+  ylim(30,80)
+
+```
+
+And for May 1 (same code as before)
+
+```{r may1, message = FALSE, warning = FALSE, echo = FALSE}
+#get first five days of October for all years
+holen <- energy |>
+  filter(lubridate::month(utchour) == 5, lubridate::day(utchour) %in% seq(1:5))
+
+#make factor that codes normal day - weekend day - public holiday
+holen |>
+  .d(, wend := as.numeric(weekday %in% c(1,7))) |> #get weekend days
+  .d(lubridate::day(utchour) == 1, wend := 2) |> #get october 3
+  .d(, wend := factor(wend, levels = c(0,1,2), 
+                      labels = c("normal day", "weekend", "holiday"))) |>
+  .d(, date := date(utchour)) #for plotting
+```
+
+```{r plotdatmay1, echo = FALSE}
+ggplot(holen, aes(x = hour, y = dhr, color = wend, group = date)) +
+  geom_line() +
+  scale_color_brewer(palette = "Set2") +
+  theme_minimal()+
+  ylim(30,80)
+
+```
+
+And for Christmas (classify 24th, 25th and 26th as holiday)
+```{r christmas, message = FALSE, warning = FALSE, echo = FALSE}
+#get first five days of October for all years
+holen <- energy |>
+  filter(lubridate::month(utchour) == 12, lubridate::day(utchour) %in% seq(22,27))
+
+#make factor that codes normal day - weekend day - public holiday
+holen |>
+  .d(, wend := as.numeric(weekday %in% c(1,7))) |> #get weekend days
+  .d(lubridate::day(utchour) %in% c(24,25,26), wend := 2) |> #get october 3
+  .d(, wend := factor(wend, levels = c(0,1,2), 
+                      labels = c("normal day", "weekend", "holiday"))) |>
+  .d(, date := date(utchour)) #for plotting
+```
+
+```{r plotchristmas, echo = FALSE}
+ggplot(holen, aes(x = hour, y = dhr, color = wend, group = date)) +
+  geom_line() +
+  scale_color_brewer(palette = "Set2") +
+  theme_minimal() +
+  ylim(30,80)
+
+```
+
+As we can see, the energy demand during public holidays is much more in line with that of weekends than that of normal weekdays. Christmas is a bit of an exception, with weekdays not separating as nicely from weekend/holiday days (likely due to this time of the year being a sort of holiday period aside from the two actual Christmas holidays plus Christmas Eve); nevertheless, these three holiday days are especially low in demand, so still makes sense to code them. 
+
+All in all, it would make sense to thus include a public holiday effect.
