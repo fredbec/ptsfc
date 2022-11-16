@@ -14,6 +14,8 @@ dax.baseline <- function(pastDax,
                          currDate,
                          pastObs = 1000){
 
+  .d <- `[`
+
   columns <- paste0("logR", seq(1,5))
   colapp <- paste0("logcLag", seq(1,5))
 
@@ -45,3 +47,63 @@ dax.baseline <- function(pastDax,
 
   return(preds)
 }
+
+
+
+#' Title
+#'
+#' @param pastDax
+#' @param pastObs
+#'
+#' @importFrom purrr map_dfr
+#' @import data.table
+#'
+#' @return data,table object with predictions
+#' @export
+#'
+#' @examples
+energy.baseline <- function(currDate,
+                            hours = c(11,15,19),
+                            wdays = c(6,7), #Friday and Saturday
+                            pastObs = 100){
+
+  .d <- `[`
+
+  #read in past Energy data
+  pastEner <- data.table::fread(here("data", "energy",
+                                     paste0("energy_processed" , currDate, ".csv")))
+
+  #filter out relevant hours
+  #and keep only last pastObs relevant instances
+  FSEner <- pastEner |>
+    .d(hour %in% hours & wday %in% wdays) |>
+    .d(, count := .N:1, by = c("hour", "wday")) |>
+    .d(count <= pastObs) |>
+    .d(, count := NULL) |>
+    .d()
+
+  #reshape to wide to be able to use getquants() function
+  wideFSEner <- FSEner |>
+    #change weekday to labeled (for dcast)
+    .d(, wday := lubridate::wday(utchour, label = TRUE)) |>
+    #for correct dcast attribution
+    .d(, year := lubridate::year(utchour)) |>
+    .d(, week := lubridate::week(utchour)) |>
+    .d(, utchour := NULL) |>
+    .d(, month := NULL) |>
+    data.table::dcast(year + week ~ wday + hour, value.var = "dhr") |>
+    .d()
+
+  #get quantiles
+  wlabs <- lubridate::wday(c(6,7), label = TRUE)
+  columns <- c(sapply(paste0(wlabs, "_"), function(x) paste0(x, c(11,15,19))))
+
+  predsEner <- purrr::map_dfr(wideFSEner[, ..columns], getquants, na.rm = TRUE) |>
+    setDT() |>
+    energyshell(as.Date(currDate, format = c("%Y%m%d")), targetFullDate = TRUE) |>
+    .d()
+
+  return(predsEner)
+}
+
+
