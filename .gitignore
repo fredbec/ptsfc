@@ -24,6 +24,27 @@
 vignettes/*.html
 vignettes/*.pdf
 
+#submission check
+check_submission.R
+
+#old folders
+get_data/old
+old
+
+#get_data.exe / python associated files
+get_data/build
+get_data/daily_update.spec
+get_data/__pycache__
+get_data/download_alldax.py
+get_data/dist/dax.csv
+daily_update.spec
+
+#(raw) data - too big for the github
+data/energy/raw
+data/dax/raw
+data/energy
+data/dax
+
 # OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
 .httr-oauth
 
