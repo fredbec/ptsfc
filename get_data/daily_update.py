@@ -17,8 +17,21 @@ energyToday = energy.requestSmardData(time_from = time_from, days = 7)
 daxToday = dax.requestDAXdata(time_from = time_from, days = 7)
 
 #read in previous data
-energyHist = pd.read_csv(energyPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
-daxHist = pd.read_csv(daxPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
+try:
+	energyHist = pd.read_csv(energyPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
+	daxHist = pd.read_csv(daxPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
+
+except:
+	try:
+		time_from_old = time_from_old - datetime.timedelta(days = 1)
+		energyHist = pd.read_csv(energyPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
+		daxHist = pd.read_csv(daxPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
+	except:
+		time_from_old = time_from_old - datetime.timedelta(days = 2)
+		energyHist = pd.read_csv(energyPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
+		daxHist = pd.read_csv(daxPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
+
+
 
 
 #combine data and remove duplicates (keep later instance in case of corrections)
