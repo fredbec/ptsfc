@@ -1,4 +1,4 @@
-#' Converts to UTC
+#' Converts to UTC and aggregates by hour
 #'
 #' @param currDate
 #' @param pathFrom
@@ -16,6 +16,9 @@ format.energy.byhour <- function(currDate,
                                  pathTo = here("data", "energy")){
 
   rawData <- data.table::fread(here(pathFrom, paste0("energy", currDate, ".csv")))
+
+  #to merge holiday info
+  holidayData <- data.table::fread(here("data", "holidays.csv"))
 
   #for piping data.table
   .d <- `[`
@@ -37,12 +40,27 @@ format.energy.byhour <- function(currDate,
     .d(, scount := NULL) |>
 
     #now, aggregate by hour
-    .d(, utchour := floor_date(utcdt, unit = "hour")) |>
+    .d(, utchour := lubridate::floor_date(utcdt, unit = "hour")) |>
     .d(, `:=` (count = .N), by = list(utchour)) |>
     #remove if count < 4 (this only happens at the end of the data, if no full hour was available)
     .d(count == 4) |>
     .d(,count := NULL) |>
-    .d(, .(dhr = sum(demand)), by = utchour)
+    .d(, .(dhr = sum(demand)), by = utchour) |>
+
+
+    #include some variables for hour, weekday, date, ...
+    .d(, date := lubridate::date(utchour)) |>
+    .d(, hour := lubridate::hour(utchour)) |>
+    .d(, wday := lubridate::wday(utchour)) |>
+    .d(, month := lubridate::month(utchour)) |>
+    .d(, wkend := data.table::fcase(
+      wday %in% c(1,7), 1,
+      wday %in% seq(2,6), 0
+    )) |>
+
+    #merge holiday info
+    merge(holidayData, by = "date", all.x = TRUE) |>
+    .d(is.na(holiday), holiday := 0) |>
     .d()
 
 
