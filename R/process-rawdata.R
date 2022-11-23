@@ -45,14 +45,18 @@ format.energy.byhour <- function(currDate,
     #remove if count < 4 (this only happens at the end of the data, if no full hour was available)
     .d(count == 4) |>
     .d(,count := NULL) |>
+  #TODO print NAs before removing (or after)
+    .d(demand == "-", demand := NA) |>
+    .d(, demand := as.numeric(demand)) |>
+    .d(!is.na(demand)) |>
     .d(, .(dhr = sum(demand)), by = utchour) |>
-
 
     #include some variables for hour, weekday, date, ...
     .d(, date := lubridate::date(utchour)) |>
     .d(, hour := lubridate::hour(utchour)) |>
     .d(, wday := lubridate::wday(utchour)) |>
     .d(, month := lubridate::month(utchour)) |>
+    .d(, year := lubridate::year(utchour)) |>
     .d(, wkend := data.table::fcase(
       wday %in% c(1,7), 1,
       wday %in% seq(2,6), 0
