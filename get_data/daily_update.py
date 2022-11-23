@@ -27,9 +27,15 @@ except:
 		energyHist = pd.read_csv(energyPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
 		daxHist = pd.read_csv(daxPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
 	except:
-		time_from_old = time_from_old - datetime.timedelta(days = 2)
-		energyHist = pd.read_csv(energyPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
-		daxHist = pd.read_csv(daxPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
+		try: 
+			time_from_old = time_from_old - datetime.timedelta(days = 2)
+			energyHist = pd.read_csv(energyPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
+			daxHist = pd.read_csv(daxPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
+		except:
+			time_from_old = time_from_old - datetime.timedelta(days = 2)
+			energyHist = pd.read_csv(energyPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
+			daxHist = pd.read_csv(daxPath + str(time_from_old.strftime('%Y%m%d')) + ".csv")
+
 
 
 
