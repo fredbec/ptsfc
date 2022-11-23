@@ -31,7 +31,8 @@ rq.energy.model <- function(currDate,
     hour = c(11, 15, 19, 11, 15, 19),
     wday = rep(c(6,7), each = 3),
     holwkend = rep(c(0,1), each = 3),
-    month = rep(11, times = 6)
+    month = rep(11, times = 6),
+    year = rep(2022, times = 6)
   )
 
 
