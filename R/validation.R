@@ -4,9 +4,18 @@ cv.energy.rq <- function(currDate,
 
   .d <- `[`
 
-  energy <- data.table::fread(here("data", "energy", paste0("energy_processed", currDate, ".csv")))
 
-  energy <- format.energy.byhour(currDate) |>
+  #reformat Date to read in data
+  if(!lubridate::is.Date(currDate)){
+    stop("currDate needs to be in Date format")
+  }
+  currDateForm <- as.character(format(currDate, format = "%Y%m%d"))
+
+  energy <- data.table::fread(
+    here("data", "energy", paste0("energy_processed", currDateForm, ".csv"))) |>
+    dplyr::filter(year > 2015)
+
+  energy <- energy |>
     .d(, holwkend := data.table::fcase(
       wkend == 1 | holiday == 1, 1,
       wkend == 0 & holiday == 0, 0

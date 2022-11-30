@@ -1,4 +1,4 @@
-#' Title
+#' Function that simply returns the empirical quantiles of a time series
 #'
 #' @param tser Time Series
 #' @param probs quantile levels
@@ -34,6 +34,10 @@ daxshell <- function(preds,
                      weekday = "Wednesday",
                      nameSeries = "DAX"){
 
+  if(!lubridate::is.Date(currDate)){
+    stop("currDate needs to be in Date format")
+  }
+
   .d <- `[`
 
   maxhor <- nrow(preds)
@@ -61,7 +65,7 @@ daxshell <- function(preds,
 #' Title
 #'
 #' @param preds
-#' @param currDate
+#' @param currDate Date in the format YYYY-MM-DD
 #' @param weekday
 #' @param nameSeries
 #'
@@ -75,6 +79,11 @@ energyshell <- function(preds,
                         weekday = "Wednesday",
                         nameSeries = "energy"){
 
+
+  if(!lubridate::is.Date(currDate)){
+    stop("currDate needs to be in Date format")
+  }
+
   .d <- `[`
 
   maxhor <- nrow(preds)
@@ -82,8 +91,8 @@ energyshell <- function(preds,
   horizons <- paste0(c(36,40,44,60,64,68), " hour")
 
   if(targetFullDate){
-    FSDates <- c(as.Date(currDate) + lubridate::days(targetDiff[1]),
-                 as.Date(currDate) + lubridate::days(targetDiff[2]))
+    FSDates <- c(currDate + lubridate::days(targetDiff[1]),
+                 currDate + lubridate::days(targetDiff[2]))
     FSTimes <- c("11:00:00", "15:00:00", "19:00:00")
 
 
@@ -108,9 +117,19 @@ energyshell <- function(preds,
 
 
 
-windshell <- function(preds,
+windshell <- function(preds = NULL,
                       currDate,
+                      returnNA = FALSE,
                       nameSeries = "wind"){
+
+  if(is.null(preds) & !returnNA){
+
+    stop("If not supplying predictions, returnNA needs to be set to TRUE")
+  }
+
+  if(!lubridate::is.Date(currDate)){
+    stop("currDate needs to be in Date format")
+  }
 
   .d <- `[`
 

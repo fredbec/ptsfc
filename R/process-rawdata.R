@@ -1,6 +1,6 @@
 #' Converts to UTC and aggregates by hour
 #'
-#' @param currDate
+#' @param currDate current Date in date format (YYYY-MM-DD)
 #' @param pathFrom
 #' @param pathTo
 #'
@@ -15,7 +15,13 @@ format.energy.byhour <- function(currDate,
                                  pathFrom = here("data", "energy", "raw"),
                                  pathTo = here("data", "energy")){
 
-  rawData <- data.table::fread(here(pathFrom, paste0("energy", currDate, ".csv")))
+  #reformat Date to read in data
+  if(!lubridate::is.Date(currDate)){
+    stop("currDate needs to be in Date format")
+  }
+  currDateForm <- as.character(format(currDate, format = "%Y%m%d"))
+
+  rawData <- data.table::fread(here(pathFrom, paste0("energy", currDateForm, ".csv")))
 
   #to merge holiday info
   holidayData <- data.table::fread(here("data", "holidays.csv"))
@@ -25,6 +31,12 @@ format.energy.byhour <- function(currDate,
 
   #first, convert everything to UTC
   processedData <- rawData |>
+    #TODO find out why there are sometimes extra columns and rows returned by the API
+    #for now, simply remove these:
+    .d(, .(date, time, demand)) |>
+    .d(!is.na(demand)) |>
+
+
     #to identify shifts in Daylight Savings Time
     .d(, dupid := paste0(date, time)) |>
     .d(, `:=` (count = .N, scount = 1:.N), by = dupid) |>
@@ -68,7 +80,8 @@ format.energy.byhour <- function(currDate,
     .d()
 
 
-  data.table::fwrite(processedData, here(pathTo, paste0("energy_processed", currDate, ".csv")))
+  data.table::fwrite(processedData,
+                     here(pathTo, paste0("energy_processed", currDateForm, ".csv")))
   return(processedData)
 
 
@@ -92,7 +105,13 @@ format.dax<- function(currDate,
                       pathFrom = here("data", "dax", "raw"),
                       pathTo = here("data", "dax")){
 
-  rawData <- data.table::fread(here(pathFrom, paste0("dax", currDate, ".csv")))
+  #reformat Date to read in data
+  if(!lubridate::is.Date(currDate)){
+    stop("currDate needs to be in Date format")
+  }
+  currDateForm <- as.character(format(currDate, format = "%Y%m%d"))
+
+  rawData <- data.table::fread(here(pathFrom, paste0("dax", currDateForm, ".csv")))
 
   #for piping data.table
   .d <- `[`
@@ -117,7 +136,8 @@ format.dax<- function(currDate,
     .d(!is.na(logR5))
 
 
-  data.table::fwrite(processedData, here(pathTo, paste0("dax", currDate, ".csv")))
+  data.table::fwrite(processedData,
+                     here(pathTo, paste0("dax", currDateForm, ".csv")))
 
   return(processedData)
 

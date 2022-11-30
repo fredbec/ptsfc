@@ -10,40 +10,51 @@
 #' @export
 #'
 #' @examples
-dax.baseline <- function(pastDax,
-                         currDate,
+dax.baseline <- function(currDate,
                          pastObs = 1000){
 
   .d <- `[`
+
+  #reformat Date
+  if(!lubridate::is.Date(currDate)){
+    stop("currDate needs to be in Date format")
+  }
+  currDateForm <- as.character(format(currDate, format = "%Y%m%d"))
+
+  #read in past Energy data
+  pastDax <- data.table::fread(here("data", "dax", "raw",
+                                     paste0("dax" , currDateForm, ".csv")))
 
   columns <- paste0("logR", seq(1,5))
   colapp <- paste0("logcLag", seq(1,5))
 
   logRs <- pastDax |>
     setDT() |>
-    .d(, Date := as.Date(Date, origin = "1970-01-01")) |>
-    .d(, .(Date, Close)) |>
+    #.d(, Date := as.Date(Date, origin = "1970-01-01")) |>
+    .d(, .(date, close)) |>
 
     #impute nulls with average of surrounding values
     #crude, but only applies to two values
-    .d(Close == "null", Close := 0) |>
-    .d(, Close := as.numeric(Close)) |>
-    .d(, leadC := shift(Close, -1)) |>
-    .d(, lagC := shift(Close, 1)) |>
-    .d(Close == 0, Close := (leadC+lagC)/2) |>
+    .d(is.na(close), close := 0) |>
+    .d(, close := as.numeric(close)) |>
+    .d(, leadC := shift(close, -1)) |>
+    .d(, lagC := shift(close, 1)) |>
+    .d(close == 0, close := (leadC+lagC)/2) |>
 
     #make log returns
-    .d(, logc := log(Close)) |>
+    .d(, logc := log(close)) |>
     .d(, paste0("logcLag", seq(1,5)) := shift(logc,seq(1,5))) |>
     .d(, (columns) := lapply(.SD, function(x) 100* (logc-x)), .SDcols = colapp) |>
-    .d(, c("Date", paste0("logR", seq(1,5)))) |>
+    .d(, c("date", paste0("logR", seq(1,5)))) |>
     .d(!is.na(logR5))
 
   preds <- purrr::map_dfr(logRs[, paste0("logR", seq(1,5))], getquants) |>
     setDT()
 
   daxshell(preds, currDate = currDate) |>
-    setcolorder(neworder = c("forecast_date", "target", "horizon", paste0("q", c(0.025, 0.25, 0.5, 0.75, 0.975))))
+    setcolorder(neworder = c("forecast_date", "target", "horizon",
+                             paste0("q", c(0.025, 0.25, 0.5, 0.75, 0.975)))) |>
+    .d()
 
   return(preds)
 }
@@ -69,9 +80,15 @@ energy.baseline <- function(currDate,
 
   .d <- `[`
 
+  #reformat Date
+  if(!lubridate::is.Date(currDate)){
+    stop("currDate needs to be in Date format")
+  }
+  currDateForm <- as.character(format(currDate, format = "%Y%m%d"))
+
   #read in past Energy data
   pastEner <- data.table::fread(here("data", "energy",
-                                     paste0("energy_processed" , currDate, ".csv")))
+                                     paste0("energy_processed" , currDateForm, ".csv")))
 
   #filter out relevant hours
   #and keep only last pastObs relevant instances
@@ -100,10 +117,9 @@ energy.baseline <- function(currDate,
 
   predsEner <- purrr::map_dfr(wideFSEner[, ..columns], getquants, na.rm = TRUE) |>
     setDT() |>
-    energyshell(as.Date(currDate, format = c("%Y%m%d")), targetFullDate = TRUE) |>
+    energyshell(currDate, targetFullDate = TRUE) |>
     .d()
 
   return(predsEner)
 }
-
 

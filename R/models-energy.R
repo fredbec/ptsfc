@@ -4,9 +4,14 @@ rq.energy.model <- function(currDate,
 
 
   .d <- `[`
-  cdatform <- as.character(format(currDate, format = "%Y%m%d"))
 
-  energy <- data.table::fread(here("data", "energy", paste0("energy_processed", cdatform, ".csv")))
+  #reformat Date
+  if(!lubridate::is.Date(currDate)){
+    stop("currDate needs to be in Date format")
+  }
+  currDateForm <- as.character(format(currDate, format = "%Y%m%d"))
+
+  energy <- data.table::fread(here("data", "energy", paste0("energy_processed", currDateForm, ".csv")))
 
   energy <- energy |>
     .d(, holwkend := data.table::fcase(
