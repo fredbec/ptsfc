@@ -17,7 +17,30 @@ getquants <- function(tser,
   return(quants)
 }
 
+#' Function that returns quantiles based on a table of mean and standard deviations
+#'
+#' @param tser Time Series
+#' @param probs quantile levels
+#'
+#' @return
+#' @export
+#'
+#' @examples
+getquants.garch <- function(tableMuSig,
+                            taus = c(0.025, 0.25, 0.5, 0.75, 0.975)){
 
+  getqs <- function(mu, sig, taus){
+    qVals <- sapply(taus, function(qlvl) qnorm(qlvl, mean = mu, sd = sig))
+    names(qVals) <- paste0("q", taus)
+
+    return(qVals)
+  }
+
+  quants <- apply(tableMuSig, 2, function(x) getqs(x[1], x[2], taus = taus))
+
+  return(quants)
+
+}
 
 #' Title
 #'
@@ -129,6 +152,14 @@ windshell <- function(preds = NULL,
 
   if(!lubridate::is.Date(currDate)){
     stop("currDate needs to be in Date format")
+  }
+
+  if(is.null(preds)){
+    preds <- data.table(q0.025 = rep(NA, 5),
+                        q0.25 = rep(NA, 5),
+                        q0.5 = rep(NA, 5),
+                        q0.75 = rep(NA, 5),
+                        q0.975 = rep(NA, 5))
   }
 
   .d <- `[`
