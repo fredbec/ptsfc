@@ -1,0 +1,9 @@
+"target","date","model","score","submit"
+"energy",2022-11-30,"quantreg-basic",NA,TRUE
+"dax",2022-11-30,"garch-manual",NA,TRUE
+"energy",2022-11-23,"quantreg-basic",NA,TRUE
+"dax",2022-11-23,"garch-manual",NA,TRUE
+"energy",2022-11-16,"quantreg-basic",NA,TRUE
+"dax",2022-11-16,"garch-manual",NA,TRUE
+"energy",2022-11-09,"energy-baseline",NA,TRUE
+"dax",2022-11-09,"garch-manual",NA,TRUE
