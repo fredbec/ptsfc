@@ -40,9 +40,20 @@ def requestSmardData (
 
     # create pandas dataframe out of response string (csv)
     df = pd.read_csv(StringIO(data.text), sep=';')
-    colnames = {"Datum": "date", "Uhrzeit": "time", "Gesamt (Netzlast)[MWh]": "demand"}
+    #colnames = {"Datum": "date", "Uhrzeit": "time", "Gesamt (Netzlast)[MWh]": "demand"}
 
-    df = df.rename(columns = colnames)
+    df = df.drop(columns= 'Ende')
+    df.columns = ["date", "time", "demand"]
+
+    print(df.head())
+    
+    
+    df['demand'] = df['demand'].str.replace(',','')
+    #THIS ONE YOU REALLY NEED TO CHANGE
+    df['demand'] = df['demand'].str.replace('-',"0")
+
+    df['demand'] = pd.to_numeric(df['demand'])
+
 
     return df
 
