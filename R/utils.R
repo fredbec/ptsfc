@@ -176,3 +176,32 @@ windshell <- function(preds = NULL,
 
   return(preds)
 }
+
+
+appendtargetFullDate <- function(predTable, targetDiff = c(2,3)){
+
+  .d <- `[`
+
+  currDate <- unique(predTable$forecast_date) |> as.Date()
+
+  #return(currDate)
+  if(unique(predTable$target) == "energy"){
+
+    FSDates <- c(currDate + lubridate::days(targetDiff[1]),
+                 currDate + lubridate::days(targetDiff[2]))
+    FSTimes <- c("11:00:00", "15:00:00", "19:00:00")
+
+
+    targetDates <- c(lubridate::as_datetime(paste(FSDates[1], FSTimes)),
+                     lubridate::as_datetime(paste(FSDates[2], FSTimes)))
+
+    predTable |>
+      .d(, target_date := targetDates) |>
+      .d()
+
+  } else if(unique(predTable$target) == "dax"){
+    stop("not implemented yet")
+  }
+
+  return(predTable)
+}
